@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 # 对于wsgi的理解并对其进行实验
-# https://www.python.org/dev/peps/pep-0333/
+# https://www.python.org/dev/peps/pep-3333/
 import socket,re,os
 
 httpre=re.compile(r"^(\w*)\s*([^\s]*)\s*HTTP\/([.\d]*)[\r\n]*([\s\S]+)[\r\n]*[\r\n]*([\s\S]?)$")
