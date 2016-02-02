@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding:utf-8 -*-
 from Queue import Queue
 
 class Task():
@@ -58,10 +59,25 @@ class Scheduler():
 
 '''
 System Call function
+直接调用不能对类型作出控制
+所以需要模拟出一个类
 '''
-def getTaskId(task,scheduler):
-	return task.taskId
-	pass
+
+class SysCall():
+	def __init__(self,callback):
+		self.__callback = callback
+
+	def __call__(self,task,scheduler):
+		if not isinstance(task,Task):
+			raise TypeError(task+" is not instance of Task!")
+		if not isinstance(scheduler,Scheduler):
+			raise TypeError(scheduler+" is not instance of Scheduler!")
+		callback = self.__callback
+		return callback(task,scheduler)
+
+
+def getTaskId():
+	return SysCall(lambda x )
 
 
 def task1():
@@ -73,8 +89,6 @@ def task1():
 		print "ID is %s"%pid
 	
 
-def task2():
-	i = 0
 	while i < 20:
 		print "This is task 2 %s"%i
 		i=i+1
