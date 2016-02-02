@@ -6,7 +6,7 @@ class Task():
 	def __init__(self,taskid,coroutine):
 		self.taskId = taskid
 		self.coroutine = coroutine
-		self.sendValue = ''
+		self.sendValue = 1000
 		self.beforeFirstYield = True
 		self.isFinished = False
 
@@ -20,7 +20,6 @@ class Task():
 		else:
 			try:
 				retval = self.coroutine.send(self.sendValue)
-				self.sendvalue = False
 				return retval
 			except StopIteration:
 				self.isFinished = True
@@ -38,18 +37,22 @@ class Scheduler():
 		self.taskQueue.put(task)
 
 	def newTask(self,coroutine):
-		tid = self.maxTaskId+1
-		task = Task(tid,coroutine)
-		self.taskMap.append([tid,task])
+		self.maxTaskId+=1
+		task = Task(self.maxTaskId,coroutine)
+		self.taskMap.append([self.maxTaskId,task])
 		self.scheduler(task)
-		return tid
+		return self.maxTaskId
 
 	def run(self):
 		while not self.taskQueue.empty():
 			task = self.taskQueue.get()
-			task.sendValue = task.getTaskId()
 			retval = task.run()
-			retval(task,self)
+			
+			if isinstance(retval,SysCall):
+				retval(task,self)
+				self.scheduler(task)
+				continue
+
 			if task.isFinished:
 				tid = task.getTaskId()
 				self.taskMap.remove([tid,task])
@@ -62,7 +65,6 @@ System Call function
 直接调用不能对类型作出控制
 所以需要模拟出一个类
 '''
-
 class SysCall():
 	def __init__(self,callback):
 		self.__callback = callback
@@ -77,18 +79,25 @@ class SysCall():
 
 
 def getTaskId():
-	return SysCall(lambda x )
+	def tmp(task,scheduler):
+		task.sendValue = task.getTaskId()
+	return SysCall(tmp)
+
 
 
 def task1():
 	i = 0
-	while i < 30:
+	while i < 1:
 		print "This is task 1 %s"%i
+		pid = (yield getTaskId())
+		print "ID is %d"%pid
 		i=i+1
-		pid = yield getTaskId
-		print "ID is %s"%pid
 	
 
+def task2():
+	i=0
+	pid = (yield getTaskId())
+	print "ID is %d"%pid
 	while i < 20:
 		print "This is task 2 %s"%i
 		i=i+1
@@ -96,6 +105,6 @@ def task1():
 
 schedular = Scheduler()
 schedular.newTask(task1())
-#schedular.newTask(task2())
+schedular.newTask(task2())
 
 schedular.run()
