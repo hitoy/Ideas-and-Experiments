@@ -31,15 +31,29 @@ class Scheduler():
 	def __init__(self):
 		self.taskQueue = Queue()
 		self.maxTaskId = 0
-		self.taskMap = list()
+		self.taskMap = dict()
 
 	def scheduler(self,task):
 		self.taskQueue.put(task)
+	
+	def KillTask(self,taskid):
+		if  not taskid in self.taskMap:
+			return False
+		i = 0
+		while i < self.taskQueue.qsize():
+			tmp = self.taskQueue.get()
+			if tmp == self.taskMap[taskid]:
+				del self.taskMap[taskid]
+				break
+			else:
+				self.scheduler(tmp)
+			i+=1
+		return True
 
 	def newTask(self,coroutine):
 		self.maxTaskId+=1
 		task = Task(self.maxTaskId,coroutine)
-		self.taskMap.append([self.maxTaskId,task])
+		self.taskMap[self.maxTaskId] = task
 		self.scheduler(task)
 		return self.maxTaskId
 
@@ -47,15 +61,13 @@ class Scheduler():
 		while not self.taskQueue.empty():
 			task = self.taskQueue.get()
 			retval = task.run()
-			
 			if isinstance(retval,SysCall):
 				retval(task,self)
-				self.scheduler(task)
 				continue
 
 			if task.isFinished:
 				tid = task.getTaskId()
-				self.taskMap.remove([tid,task])
+				del self.taskMap[tid]
 			else:
 				self.scheduler(task)
 
@@ -78,33 +90,66 @@ class SysCall():
 		return callback(task,scheduler)
 
 
-def getTaskId():
+"""
+系统函数，供用户调用:
+"""
+def getPID():
 	def tmp(task,scheduler):
 		task.sendValue = task.getTaskId()
+		scheduler.scheduler(task)
 	return SysCall(tmp)
 
 
+def KillTask(taskid):
+	def tmp(task,scheduler):
+		task.sendValue =  scheduler.KillTask(taskid)
+	return SysCall(tmp)
 
+def Fork():
+	def tmp(task,scheduler):
+		scheduler.newTask(task.coroutine)
+		task.sendValue = (task.getTaskId(),0)
+	return SysCall(tmp)
+
+
+"""
+用户程序
+"""
 def task1():
 	i = 0
-	while i < 1:
-		print "This is task 1 %s"%i
-		pid = (yield getTaskId())
-		print "ID is %d"%pid
+	pid = (yield getPID())
+	while i < 100:
+		print "This is task pid is %d i is %s"%(pid,i)
+		pid = yield Fork()
 		i=i+1
+		yield
 	
-
+"""
 def task2():
 	i=0
-	pid = (yield getTaskId())
-	print "ID is %d"%pid
-	while i < 20:
-		print "This is task 2 %s"%i
+	pid = (yield getPID())
+	while i < 10:
+		print "This is task pid is %d i is %s"%(pid,i)
+		if i == 5:
+			re = yield KillTask(1)
+			print "KillTask 1 %s"%re
+			#re = yield KillTask(2)
+			#print "KillTask 1 %s"%re
+			pass
 		i=i+1
 		yield
 
+def task3():
+	i=0
+	pid = (yield getPID())
+	while i < 30:
+		print "This is task pid is %d i is %s"%(pid,i)
+		i +=1
+		yield
+"""
 schedular = Scheduler()
 schedular.newTask(task1())
-schedular.newTask(task2())
+#schedular.newTask(task2())
+#schedular.newTask(task3())
 
 schedular.run()
