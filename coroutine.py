@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
 from Queue import Queue
+import copy
 
 class Task():
 	def __init__(self,taskid,coroutine):
@@ -13,11 +14,15 @@ class Task():
 	def getTaskId(self):
 		return self.__taskId
 
+	def setYield(self):
+		self.__beforeFirstYield = False
+
 	def setValue(self,value):
 		self.__sendValue = value
 
 	def run(self):
 		if(self.__beforeFirstYield):
+			print self.__taskid
 			self.__beforeFirstYield = False
 			return self.__coroutine.next()
 		else:
@@ -74,7 +79,6 @@ class Scheduler():
 			else:
 				self.scheduler(task)
 
-
 '''
 System Call function
 直接调用不能对类型作出控制
@@ -91,7 +95,6 @@ class SysCall():
 			raise TypeError(scheduler+" is not instance of Scheduler!")
 		callback = self.__callback
 		return callback(task,scheduler)
-
 
 """
 系统函数，供用户调用:
@@ -117,15 +120,22 @@ fork函数很特别，需要创建任务的一个分支出来
 """
 def fork():
 	def tmp(task,scheduler):
-		scheduler.newTask(task.coroutine)
-		task.sendValue = (task.getTaskId(),0)
+		#克隆一个新任务
+		childtask = copy.copy(task)
+		childtask.setYield()
+
+		scheduler.newTask(childtask)
+
+		#给父任务设置返回为子任务ID
+		task.setValue(scheduler.maxTaskId)
+		#给子任务设置返回为0
+		childtask.setValue(0)
 	return SysCall(tmp)
-
-
-
 
 """
 用户程序
+"""
+
 """
 def task1():
 	i = 0
@@ -135,8 +145,9 @@ def task1():
 		print "This is task pid is %s i is %s"%(pid,i)
 		i=i+1
 		yield
+"""
 
-
+"""
 def task2():
 	i = 0
 	pid = yield getpid()
@@ -152,30 +163,21 @@ schedular.newTask(task1())
 schedular.newTask(task2())
 schedular.run()
 
-
 """
-def task2():
-	i=0
-	pid = (yield getPID())
-	while i < 10:
-		print "This is task pid is %d i is %s"%(pid,i)
-		if i == 5:
-			re = yield KillTask(1)
-			print "KillTask 1 %s"%re
-			#re = yield KillTask(2)
-			#print "KillTask 1 %s"%re
-			pass
-		i=i+1
-		yield
 
 def task3():
 	i=0
-	pid = (yield getPID())
-	while i < 30:
-		print "This is task pid is %d i is %s"%(pid,i)
-		i +=1
+	pid = (yield getpid())
+	while i < 10:
+		print "This is task pid is %s i is %s"%(pid,i)
+		if i == 5:
+			pid = yield fork()
+			if pid > 0:
+				print "This is Parent Task, the child Task id is"%(pid)
+			else:
+				print "This is Child Task"
+		i = i + 1
 		yield
-"""
-#schedular.newTask(task2())
-#schedular.newTask(task3())
-
+schedular = Scheduler()
+schedular.newTask(task3())
+schedular.run()
