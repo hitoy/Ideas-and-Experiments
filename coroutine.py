@@ -4,22 +4,25 @@ from Queue import Queue
 
 class Task():
 	def __init__(self,taskid,coroutine):
-		self.taskId = taskid
-		self.coroutine = coroutine
-		self.sendValue = 1000
-		self.beforeFirstYield = True
+		self.__taskId = taskid
+		self.__coroutine = coroutine
+		self.__sendValue = '' 
+		self.__beforeFirstYield = True
 		self.isFinished = False
 
 	def getTaskId(self):
-		return self.taskId
+		return self.__taskId
+
+	def setValue(self,value):
+		self.__sendValue = value
 
 	def run(self):
-		if(self.beforeFirstYield):
-			self.beforeFirstYield = False
-			return self.coroutine.next()
+		if(self.__beforeFirstYield):
+			self.__beforeFirstYield = False
+			return self.__coroutine.next()
 		else:
 			try:
-				retval = self.coroutine.send(self.sendValue)
+				retval = self.__coroutine.send(self.__sendValue)
 				return retval
 			except StopIteration:
 				self.isFinished = True
@@ -93,23 +96,32 @@ class SysCall():
 """
 系统函数，供用户调用:
 """
-def getPID():
+def getpid():
 	def tmp(task,scheduler):
-		task.sendValue = task.getTaskId()
+		task.setValue(task.getTaskId())
 		scheduler.scheduler(task)
 	return SysCall(tmp)
 
 
 def KillTask(taskid):
 	def tmp(task,scheduler):
-		task.sendValue =  scheduler.KillTask(taskid)
+		task.setValue(scheduler.KillTask(taskid))
 	return SysCall(tmp)
 
-def Fork():
+
+"""
+fork函数很特别，需要创建任务的一个分支出来
+1，创建一个新任务，这个新任务为子任务
+2，给这个新任务sendvalue返回0
+3，给老任务返回新任务的任务ID
+"""
+def fork():
 	def tmp(task,scheduler):
 		scheduler.newTask(task.coroutine)
 		task.sendValue = (task.getTaskId(),0)
 	return SysCall(tmp)
+
+
 
 
 """
@@ -117,13 +129,30 @@ def Fork():
 """
 def task1():
 	i = 0
-	pid = (yield getPID())
+	#yield 既是中断
+	pid = yield getpid()
 	while i < 100:
-		print "This is task pid is %d i is %s"%(pid,i)
-		pid = yield Fork()
+		print "This is task pid is %s i is %s"%(pid,i)
 		i=i+1
 		yield
-	
+
+
+def task2():
+	i = 0
+	pid = yield getpid()
+	while i < 100:
+		print "This is task pid is %s i is %s"%(pid,i)
+		if i == 10:
+			yield KillTask(getpid())
+		i=i+1
+		yield
+
+schedular = Scheduler()
+schedular.newTask(task1())
+schedular.newTask(task2())
+schedular.run()
+
+
 """
 def task2():
 	i=0
@@ -147,9 +176,6 @@ def task3():
 		i +=1
 		yield
 """
-schedular = Scheduler()
-schedular.newTask(task1())
 #schedular.newTask(task2())
 #schedular.newTask(task3())
 
-schedular.run()
