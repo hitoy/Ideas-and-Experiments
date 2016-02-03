@@ -22,7 +22,6 @@ class Task():
 
 	def run(self):
 		if(self.__beforeFirstYield):
-			print self.__taskid
 			self.__beforeFirstYield = False
 			return self.__coroutine.next()
 		else:
@@ -57,6 +56,15 @@ class Scheduler():
 				self.scheduler(tmp)
 			i+=1
 		return True
+
+	def copy(self,pid):
+		if not pid in self.taskMap:
+			return False
+		newtask = copy.deepcopy(self.taskMap[pid])
+		newtaskid = self.maxTaskId + 1
+		self.taskMap[newtaskid] = newtask
+		self.scheduler(newtask)
+		return newtask
 
 	def newTask(self,coroutine):
 		self.maxTaskId+=1
@@ -120,16 +128,14 @@ fork函数很特别，需要创建任务的一个分支出来
 """
 def fork():
 	def tmp(task,scheduler):
+		taskid = task.getTaskId()
 		#克隆一个新任务
-		childtask = copy.copy(task)
-		childtask.setYield()
-
-		scheduler.newTask(childtask)
-
+		childtask = scheduler.copy(taskid)
 		#给父任务设置返回为子任务ID
 		task.setValue(scheduler.maxTaskId)
 		#给子任务设置返回为0
 		childtask.setValue(0)
+		print (scheduler.taskMap)
 	return SysCall(tmp)
 
 """
@@ -168,8 +174,8 @@ schedular.run()
 def task3():
 	i=0
 	pid = (yield getpid())
+	print "This is task pid is %s i is %s"%(pid,i)
 	while i < 10:
-		print "This is task pid is %s i is %s"%(pid,i)
 		if i == 5:
 			pid = yield fork()
 			if pid > 0:
