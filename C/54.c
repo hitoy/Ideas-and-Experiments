@@ -6,10 +6,11 @@
 int main(){
     unsigned int a,b,c,d;
     printf("Pleae Input A numBer:");
-    scanf("%o",&a);
+    scanf("%d",&a);
     b = a>>4;
+    printf("b is %d\n",b);
     c = ~(0<<4);
     d = b & c;
-    printf("%o\n%d\n",a,d);
+    printf("a = %d d = %d\n",a,d);
     return 0;
 }
