@@ -13,18 +13,18 @@ int main(){
     }
     //用一个长数组存放第N行的杨辉三角的数字
     long int hui[lines];
-    int n = 1,i,pre;
+    int n = 1,i;
     while(n<=lines){
         //第一个和最后一个永远是1
         hui[0] = 1;
         hui[n-1] = 1;
         //第N个杨辉三角遍历
-        for(i=0;i<n;i++){
+        for(i=n-1;i>=0;i--){
             if(i>0 && i < n-1){
-                pre = hui[i];
-                hui[i] = hui[i] + pre;
+                hui[i] = hui[i] + hui[i-1];
             }
-
+        }
+        for(i=0;i<n;i++){
             printf("%ld ",hui[i]);
         }
         printf("\n");
