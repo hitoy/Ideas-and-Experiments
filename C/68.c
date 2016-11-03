@@ -16,11 +16,9 @@ int main(){
         p = realloc(p,sizeof(int)*(i+2));
         i++; 
     }
-    /*
     printf("请输入数组偏移量:");
-    scanf("%d",num);
-    move_array(p,i+1;num);
-    */
+    scanf("%d",&num);
+    move_array(p,i,num);
     print_array(p,i);
     return 0;
 }
@@ -31,11 +29,15 @@ void move_array(int *array,int n,int offset){
         printf("offset to large!\n");
         exit(0);
     }
-    int i,last;
-    for(i=n-1;i>offset;i--){
-        last = array[n-1];
-    
-    
+    int i,j,last,tmp,change;
+    while(offset>0){
+        change = array[n-1];
+        for(i=0;i<n;i++){
+            tmp = array[i];
+            array[i] = change;
+            change = tmp;
+        }
+        offset--;
     }
 }
 
