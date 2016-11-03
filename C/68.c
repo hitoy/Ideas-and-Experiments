@@ -23,7 +23,6 @@ int main(){
     return 0;
 }
 
-
 void move_array(int *array,int n,int offset){
     if(offset>=n){
         printf("offset to large!\n");
