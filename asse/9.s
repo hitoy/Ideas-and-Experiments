@@ -5,8 +5,8 @@ assume cs:code,ds:data
     data ends
     code segment
     start:
-        mov al,'a'
-        mov bl,'b'
+        mov al,ds:[0]
+        mov bl,ds:[1]
         mov ax,4c00h
         int 21h
     code ends
