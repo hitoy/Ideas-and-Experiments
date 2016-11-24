@@ -31,3 +31,4 @@ code segment
     int 21h
 code ends
 end start
+;关键点: and和or的位运算
