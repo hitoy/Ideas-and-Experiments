@@ -15,8 +15,8 @@ code segment
 
 code ends
 end start
-; 知识点: jmp short 标号： 段内短转移 -128-127偏移
-; jmp near ptr 标号：段内近转移，-32768-32767
+; 知识点: jmp short 标号： 段内短转移 -128-127偏移  : 位移
+; jmp near ptr 标号：段内近转移，-32768-32767       : 位移
 ; jmp far ptr 标号：段内远转移,
 ; jmp 16位reg 段内转移
 ; jmp word ptr 段内转移
