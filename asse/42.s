@@ -17,7 +17,7 @@ code segment
         mov ax,stack
         mov ss,ax
         mov sp,160
-        mov bp,160
+        mov bp,sp
         ;读取数据
         mov cx,6
         ;port 987420
